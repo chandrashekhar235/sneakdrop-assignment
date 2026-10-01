@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Sneaker Drop | Concurrency Demo</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+      background: #f8fafc;
+      color: #0f172a;
+    }
+
+    .container {
+      width: min(1050px, calc(100% - 32px));
+      margin: auto;
+      padding: 40px 0 60px;
+    }
+
+    /* HEADER */
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: #2563eb;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 46px;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      max-width: 680px;
+      margin-top: 12px;
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    .api-status {
+      padding: 9px 13px;
+      border: 1px solid #bbf7d0;
+      border-radius: 999px;
+      background: #f0fdf4;
+      color: #166534;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    /* LAYOUT */
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+    }
+
+    .card {
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      background: white;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 22px 22px 0;
+    }
+
+    .card-header h2 {
+      margin: 0;
+      font-size: 19px;
+    }
+
+    .card-header p {
+      margin: 7px 0 0;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .card-body {
+      padding: 22px;
+    }
+
+    /* STOCK */
+
+    .stock-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      padding: 18px;
+      margin-bottom: 22px;
+
+      border-radius: 14px;
+      border: 1px solid #dbeafe;
+
+      background: #eff6ff;
+    }
+
+    .stock-label {
+      color: #475569;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .stock-number {
+      margin-top: 3px;
+      color: #1d4ed8;
+      font-size: 38px;
+      font-weight: 850;
+    }
+
+    .stock-info {
+      color: #64748b;
+      font-size: 12px;
+      text-align: right;
+    }
+
+    /* FORM */
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+
+      color: #334155;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 13px;
+
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      outline: none;
+
+      font: inherit;
+    }
+
+    input[type="text"]:focus {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 44px;
+
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+
+      background: white;
+      color: #0f172a;
+
+      cursor: pointer;
+
+      font: inherit;
+      font-weight: 750;
+
+      transition: 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: #94a3b8;
+      box-shadow: 0 5px 14px rgba(15, 23, 42, 0.08);
+    }
+
+    .primary {
+      border-color: #2563eb;
+      background: #2563eb;
+      color: white;
+    }
+
+    .primary:hover {
+      background: #1d4ed8;
+      border-color: #1d4ed8;
+    }
+
+    .fake {
+      border-color: #7c3aed;
+      background: #7c3aed;
+      color: white;
+    }
+
+    .fake:hover {
+      background: #6d28d9;
+      border-color: #6d28d9;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      margin-top: 14px;
+
+      color: #475569;
+      font-size: 13px;
+    }
+
+    .checkbox-row input {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* MESSAGE */
+
+    .message {
+      min-height: 43px;
+
+      margin-top: 15px;
+      padding: 11px 13px;
+
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+
+      background: #f8fafc;
+      color: #475569;
+
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .message.success {
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+      color: #166534;
+    }
+
+    .message.error {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: #991b1b;
+    }
+
+    /* STATUS */
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .stat {
+      padding: 15px;
+
+      border: 1px solid #e2e8f0;
+      border-radius: 13px;
+
+      background: #f8fafc;
+    }
+
+    .stat-label {
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+    }
+
+    .stat-value {
+      margin-top: 7px;
+
+      color: #0f172a;
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .badge {
+      display: inline-flex;
+
+      padding: 5px 9px;
+
+      border-radius: 999px;
+
+      background: #e2e8f0;
+      color: #334155;
+
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .badge.held {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge.waiting {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .badge.purchased {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    /* DEMO GUIDE */
+
+    .guide {
+      margin-top: 20px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .step {
+      padding: 16px;
+
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+
+      background: white;
+    }
+
+    .step-number {
+      display: grid;
+      place-items: center;
+
+      width: 28px;
+      height: 28px;
+
+      margin-bottom: 10px;
+
+      border-radius: 8px;
+
+      background: #eff6ff;
+      color: #2563eb;
+
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .step h3 {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .step p {
+      margin: 7px 0 0;
+
+      color: #64748b;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    /* TECH SECTION */
+
+    .tech {
+      margin-top: 20px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .tag {
+      padding: 7px 10px;
+
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+
+      background: #f8fafc;
+      color: #475569;
+
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .note {
+      margin-top: 16px;
+
+      color: #64748b;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    code {
+      padding: 2px 5px;
+
+      border-radius: 5px;
+
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    @media (max-width: 800px) {
+      .header {
+        flex-direction: column;
+      }
+
+      .main-grid,
+      .steps {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .button-grid,
+      .status-grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 36px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="container">
+
+    <!-- HEADER -->
+
+    <header class="header">
+      <div>
+        <p class="eyebrow">Backend Concurrency Demo</p>
+
+        <h1>Sneaker Drop</h1>
+
+        <p class="subtitle">
+          A limited sneaker sale with only 20 pairs.
+          This demo demonstrates atomic inventory reservation,
+          temporary holds, payment handling, and a FIFO waiting queue.
+        </p>
+      </div>
+
+      <div class="api-status">
+        ● API Running
+      </div>
+    </header>
+
+
+    <!-- MAIN -->
+
+    <section class="main-grid">
+
+      <!-- SALE CONTROLS -->
+
+      <div class="card">
+
+        <div class="card-header">
+          <h2>Sale Controls</h2>
+
+          <p>
+            Select a demo user and perform the actions below.
+            The status panel updates automatically.
+          </p>
+        </div>
+
+        <div class="card-body">
+
+          <!-- STOCK -->
+
+          <div class="stock-box">
+
+            <div>
+              <div class="stock-label">
+                PAIRS LEFT
+              </div>
+
+              <div
+                id="stock"
+                class="stock-number"
+              >
+                -
+              </div>
+            </div>
+
+            <div class="stock-info">
+              Initial inventory<br>
+              <strong>20 pairs</strong>
+            </div>
+
+          </div>
+
+
+          <!-- USER -->
+
+          <label for="userId">
+            Demo User ID
+          </label>
+
+          <input
+            type="text"
+            id="userId"
+            value="user1"
+            placeholder="e.g. user1"
+          />
+
+
+          <!-- ACTIONS -->
+
+          <div class="button-grid">
+
+            <button
+              class="primary"
+              onclick="buy()"
+            >
+              Buy & Hold
+            </button>
+
+            <button
+              onclick="pay()"
+            >
+              Pay
+            </button>
+
+            <button
+              onclick="joinQueue()"
+            >
+              Join Waiting Queue
+            </button>
+
+            <button
+              class="fake"
+              onclick="fakePayment()"
+            >
+              Fake Payment
+            </button>
+
+          </div>
+
+
+          <!-- DUPLICATE PAYMENT -->
+
+          <label class="checkbox-row">
+
+            <input
+              type="checkbox"
+              id="duplicate"
+            />
+
+            <span>
+              Send duplicate payment notification
+            </span>
+
+          </label>
+
+
+          <!-- RESULT -->
+
+          <div
+            id="message"
+            class="message"
+          >
+            Choose an action above to begin the demo.
+          </div>
+
+        </div>
+      </div>
+
+
+      <!-- STATUS -->
+
+      <div class="card">
+
+        <div class="card-header">
+
+          <h2>User Status</h2>
+
+          <p>
+            Live state for the selected user.
+            It refreshes every second.
+          </p>
+
+        </div>
+
+        <div class="card-body">
+
+          <div class="status-grid">
+
+            <div class="stat">
+
+              <div class="stat-label">
+                STATUS
+              </div>
+
+              <div
+                id="status"
+                class="stat-value"
+              >
+                <span class="badge">
+                  NOT_STARTED
+                </span>
+              </div>
+
+            </div>
+
+
+            <div class="stat">
+
+              <div class="stat-label">
+                HOLD COUNTDOWN
+              </div>
+
+              <div
+                id="countdown"
+                class="stat-value"
+              >
+                -
+              </div>
+
+            </div>
+
+
+            <div class="stat">
+
+              <div class="stat-label">
+                QUEUE POSITION
+              </div>
+
+              <div
+                id="position"
+                class="stat-value"
+              >
+                -
+              </div>
+
+            </div>
+
+
+            <div class="stat">
+
+              <div class="stat-label">
+                PURCHASED
+              </div>
+
+              <div
+                id="purchased"
+                class="stat-value"
+              >
+                0
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <p class="note">
+            Rule: a user may hold only one pair at a time
+            and can complete a maximum of two purchases.
+          </p>
+
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- DEMO GUIDE -->
+
+    <section class="card guide">
+
+      <div class="card-header">
+
+        <h2>Examiner Demo Guide</h2>
+
+        <p>
+          These steps show the main behavior implemented in the backend.
+        </p>
+
+      </div>
+
+      <div class="card-body">
+
+        <div class="steps">
+
+          <div class="step">
+
+            <div class="step-number">1</div>
+
+            <h3>Reserve a pair</h3>
+
+            <p>
+              Use <code>user1</code> and click
+              <strong>Buy &amp; Hold</strong>.
+              Stock decreases and the user enters HELD state
+              with a 5-minute countdown.
+            </p>
+
+          </div>
+
+
+          <div class="step">
+
+            <div class="step-number">2</div>
+
+            <h3>Complete payment</h3>
+
+            <p>
+              Click <strong>Pay</strong> while the hold is active.
+              The user becomes PURCHASED and the purchase count increases.
+            </p>
+
+          </div>
+
+
+          <div class="step">
+
+            <div class="step-number">3</div>
+
+            <h3>Test duplicate payment</h3>
+
+            <p>
+              Use <strong>Fake Payment</strong> and enable
+              duplicate notification. The backend handles the
+              second payment safely.
+            </p>
+
+          </div>
+
+
+          <div class="step">
+
+            <div class="step-number">4</div>
+
+            <h3>Test waiting queue</h3>
+
+            <p>
+              When stock is 0, use another user and click
+              <strong>Join Waiting Queue</strong>.
+              Their FIFO queue position appears above.
+            </p>
+
+          </div>
+
+
+          <div class="step">
+
+            <div class="step-number">5</div>
+
+            <h3>Test purchase limit</h3>
+
+            <p>
+              A user can complete two purchases.
+              A third purchase is rejected because the maximum is 2.
+            </p>
+
+          </div>
+
+
+          <div class="step">
+
+            <div class="step-number">6</div>
+
+            <h3>Explain concurrency</h3>
+
+            <p>
+              Redis performs the stock reservation atomically,
+              preventing multiple simultaneous requests from
+              selling more than the available inventory.
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- IMPLEMENTATION -->
+
+    <section class="card tech">
+
+      <div class="card-header">
+
+        <h2>Implementation Overview</h2>
+
+        <p>
+          The UI is only a demonstration layer. The important logic
+          runs in the Node.js + Redis backend.
+        </p>
+
+      </div>
+
+      <div class="card-body">
+
+        <div class="tags">
+
+          <span class="tag">
+            Node.js
+          </span>
+
+          <span class="tag">
+            Express
+          </span>
+
+          <span class="tag">
+            Redis
+          </span>
+
+          <span class="tag">
+            Atomic Stock Reservation
+          </span>
+
+          <span class="tag">
+            5-Minute Holds
+          </span>
+
+          <span class="tag">
+            FIFO Queue
+          </span>
+
+          <span class="tag">
+            Idempotent Payments
+          </span>
+
+        </div>
+
+        <p class="note">
+          The page communicates with
+          <code>/stock</code>,
+          <code>/buy</code>,
+          <code>/pay</code>,
+          <code>/join-queue</code>,
+          <code>/status/:userId</code>,
+          and
+          <code>/fake-payment</code>.
+        </p>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <script>
+
+    const userIdInput =
+      document.getElementById("userId");
+
+    const stockElement =
+      document.getElementById("stock");
+
+    const statusElement =
+      document.getElementById("status");
+
+    const countdownElement =
+      document.getElementById("countdown");
+
+    const positionElement =
+      document.getElementById("position");
+
+    const purchasedElement =
+      document.getElementById("purchased");
+
+    const messageElement =
+      document.getElementById("message");
+
+    let currentHoldId = null;
+
+
+    function getUserId() {
+
+      return userIdInput.value.trim();
+
+    }
+
+
+    function showMessage(
+      message,
+      type = ""
+    ) {
+
+      messageElement.textContent =
+        message || "No message";
+
+      messageElement.className =
+        `message ${type}`.trim();
+
+    }
+
+
+    function getStatusBadge(status) {
+
+      let className = "";
+
+      if (status === "HELD") {
+        className = "held";
+      }
+
+      if (status === "WAITING") {
+        className = "waiting";
+      }
+
+      if (status === "PURCHASED") {
+        className = "purchased";
+      }
+
+      return `
+        <span class="badge ${className}">
+          ${status}
+        </span>
+      `;
+
+    }
+
+
+    async function request(
+      url,
+      options = {}
+    ) {
+
+      const response =
+        await fetch(url, options);
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+
+        throw new Error(
+          data.message || "Request failed"
+        );
+
+      }
+
+      return data;
+
+    }
+
+
+    async function refresh() {
+
+      const userId =
+        getUserId();
+
+      if (!userId) {
+        return;
+      }
+
+      try {
+
+        const [
+          stockData,
+          statusData
+        ] = await Promise.all([
+
+          request("/stock"),
+
+          request(
+            `/status/${encodeURIComponent(userId)}`
+          )
+
+        ]);
+
+
+        stockElement.textContent =
+          stockData.stock;
+
+
+        statusElement.innerHTML =
+          getStatusBadge(
+            statusData.status
+          );
+
+
+        purchasedElement.textContent =
+          statusData.purchased || 0;
+
+        currentHoldId =
+          statusData.holdId || null;
+
+
+        if (
+          statusData.status === "HELD"
+        ) {
+
+          countdownElement.textContent =
+            `${Math.max(
+              0,
+              statusData.expiresIn
+            )}s`;
+
+        } else {
+
+          countdownElement.textContent =
+            "-";
+
+        }
+
+
+        if (
+          statusData.status === "WAITING"
+        ) {
+
+          positionElement.textContent =
+            statusData.position;
+
+        } else {
+
+          positionElement.textContent =
+            "-";
+
+        }
+
+      } catch (error) {
+
+        console.error(error);
+
+        showMessage(
+          "Unable to connect to the backend. Make sure the server is running on port 5050.",
+          "error"
+        );
+
+      }
+
+    }
+
+
+    async function buy() {
+
+      const userId =
+        getUserId();
+
+      if (!userId) {
+
+        showMessage(
+          "Enter a user ID first.",
+          "error"
+        );
+
+        return;
+
+      }
+
+      try {
+
+        const data =
+          await request("/buy", {
+
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify({
+                userId
+              })
+
+          });
+
+
+        showMessage(
+          data.message,
+          data.success
+            ? "success"
+            : "error"
+        );
+
+        if (data.holdId) {
+          currentHoldId = data.holdId;
+        }
+
+        await refresh();
+
+      } catch (error) {
+
+        showMessage(
+          error.message,
+          "error"
+        );
+
+      }
+
+    }
+
+
+    async function pay() {
+
+      const userId =
+        getUserId();
+
+      if (!userId) {
+
+        showMessage(
+          "Enter a user ID first.",
+          "error"
+        );
+
+        return;
+
+      }
+
+      if (!currentHoldId) {
+
+        showMessage(
+          "No active hold found. Buy a pair first.",
+          "error"
+        );
+
+        return;
+
+      }
+
+      try {
+
+        const data =
+          await request("/pay", {
+
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify({
+                userId,
+                holdId: currentHoldId
+              })
+
+          });
+
+
+        showMessage(
+          data.message,
+          data.success
+            ? "success"
+            : "error"
+        );
+
+
+        await refresh();
+
+      } catch (error) {
+
+        showMessage(
+          error.message,
+          "error"
+        );
+
+      }
+
+    }
+
+
+    async function joinQueue() {
+
+      const userId =
+        getUserId();
+
+      if (!userId) {
+
+        showMessage(
+          "Enter a user ID first.",
+          "error"
+        );
+
+        return;
+
+      }
+
+      try {
+
+        const data =
+          await request(
+            "/join-queue",
+            {
+
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:
+                JSON.stringify({
+                  userId
+                })
+
+            }
+          );
+
+
+        const message =
+          data.position
+            ? `${data.message}. Queue position: ${data.position}`
+            : data.message;
+
+
+        showMessage(
+          message,
+          data.success
+            ? "success"
+            : "error"
+        );
+
+
+        await refresh();
+
+      } catch (error) {
+
+        showMessage(
+          error.message,
+          "error"
+        );
+
+      }
+
+    }
+
+
+    async function fakePayment() {
+
+      const userId =
+        getUserId();
+
+      if (!userId) {
+
+        showMessage(
+          "Enter a user ID first.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      const duplicate =
+        document
+          .getElementById("duplicate")
+          .checked;
+
+      if (!currentHoldId) {
+
+        showMessage(
+          "No active hold found. Buy a pair first.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      try {
+
+        await request(
+          "/fake-payment",
+          {
+
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify({
+
+                userId,
+
+                holdId: currentHoldId,
+
+                delayMs: 2000,
+
+                duplicate
+
+              })
+
+          }
+        );
+
+
+        showMessage(
+
+          duplicate
+            ? "Fake payment scheduled. Two payment notifications will be sent."
+            : "Fake payment scheduled. One payment notification will be sent.",
+
+          "success"
+
+        );
+
+
+        await refresh();
+
+      } catch (error) {
+
+        showMessage(
+          error.message,
+          "error"
+        );
+
+      }
+
+    }
+
+
+    userIdInput.addEventListener(
+      "input",
+      refresh
+    );
+
+
+    setInterval(
+      refresh,
+      1000
+    );
+
+
+    refresh();
+
+  </script>
+
+</body>
+</html>
